@@ -4,6 +4,15 @@ const bcrypt = require("bcrypt");
 const { tokenGeneration } = require("../utils/tokenGeneration");
 const { validateRequestBody } = require("../utils/profileUpdateValidation");
 
+const USER_SAFE_DATA = [
+  "firstName",
+  "lastName",
+  "photoUrl",
+  "skills",
+  "age",
+  "about",
+];
+
 const signUp = async (req, res) => {
   try {
     const { firstName, lastName, email, password, gender, skills, age } =
@@ -32,7 +41,7 @@ const signUp = async (req, res) => {
       gender,
       skills,
       age,
-    });
+    }).select(USER_SAFE_DATA);
     const result = await user.save();
     res.status(201).json({ message: "User created successfully", result });
   } catch (error) {
@@ -45,7 +54,7 @@ const signUp = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const feed = await User.findById(userId);
+    const feed = await User.findById(userId).select(USER_SAFE_DATA);
     if (feed.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -58,16 +67,49 @@ const getProfile = async (req, res) => {
 
 const getFeed = async (req, res) => {
   try {
+    // User should be logged in to access the feed
+    // User should not see his own card
+    // User should not see the card of the users he has already connected with(accepted/rejected)
+    // User should not see the card of the users he has already sent a connection request to(ignored/interested)
+
+    //Pagination
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    if (limit > 5) {
+      limit = 5;
+    }
+    
+
     const userId = req.body.userId;
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    const feed = await User.find({});
-    if (feed.length === 0) {
-      return res.status(404).json({ error: "Users not found" });
-    }
-    res.status(200).json({ feed });
+    const connections = await Connection.find({
+      $or: [{ fromUserId: userId }, { toUserId: userId }],
+    });
+
+    const hideUsersFromFeed = new Set();
+    connections.forEach((connection) => {
+      hideUsersFromFeed.add(connection.fromUserId.toString());
+      hideUsersFromFeed.add(connection.toUserId.toString());
+    });
+
+    const usersFeed = await User.find({
+      $and: [
+        { _id: { $nin: [...hideUsersFromFeed] } },
+        { _id: { $ne: userId } },
+      ],
+    })
+      .select(USER_SAFE_DATA)
+      .skip(skip)
+      .limit(limit);
+
+    usersFeed.filter((user) => user._id.toString() !== userId.toString());
+
+    res.status(200).json({ usersFeed });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -113,7 +155,7 @@ const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
       runValidators: true,
-    });
+    }).select(USER_SAFE_DATA);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -130,7 +172,7 @@ const updateUser = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select(USER_SAFE_DATA);
     if (!user || !password) {
       return res.status(401).json({ error: "Invalid Login credentials" });
     }
@@ -201,14 +243,16 @@ const requests = async (req, res) => {
 
     const pendingRequests = await Connection.find({
       $and: [{ toUserId: userId }, { status: "interested" }],
-    }).populate("fromUserId", [
-      "firstName",
-      "lastName",
-      "photoUrl",
-      "skills",
-      "age",
-      "about",
-    ]);
+    })
+      .populate("fromUserId", [
+        "firstName",
+        "lastName",
+        "photoUrl",
+        "skills",
+        "age",
+        "about",
+      ])
+      .select(USER_SAFE_DATA);
 
     if (pendingRequests.length === 0) {
       return res.status(404).json({ error: "No pending requests found" });
