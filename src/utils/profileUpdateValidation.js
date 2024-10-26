@@ -15,8 +15,6 @@ const validateRequestBody = (request) => {
     Object.keys(request.body).every((update) =>
       allowedUpdates.includes(update)
     );
-  console.log(request.body);
-  console.log(isEditAllowed);
   return isEditAllowed;
 };
 
