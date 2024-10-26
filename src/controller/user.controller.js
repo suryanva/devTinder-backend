@@ -1,4 +1,5 @@
 const User = require("../models/user.model");
+const Connection = require("../models/connection.model");
 const bcrypt = require("bcrypt");
 const { tokenGeneration } = require("../utils/tokenGeneration");
 const { validateRequestBody } = require("../utils/profileUpdateValidation");
@@ -116,12 +117,10 @@ const updateUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    res
-      .status(200)
-      .json({
-        message: `${user.firstName} , your profile has been updated`,
-        data: user,
-      });
+    res.status(200).json({
+      message: `${user.firstName} , your profile has been updated`,
+      data: user,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -191,6 +190,30 @@ const logout = async (req, res) => {
   }
 };
 
+//Get All Connection Requests of a User
+const requests = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const requests = await User.findById(userId);
+    if (!requests) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const pendingRequests = await Connection.find({
+      $and: [{ toUserId: userId }, { status: "interested" }],
+    });
+
+    if (pendingRequests.length === 0) {
+      return res.status(404).json({ error: "No pending requests found" });
+    }
+
+    res.status(200).json({ pendingRequests });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   signUp,
   getFeed,
@@ -200,4 +223,5 @@ module.exports = {
   login,
   resetPassword,
   logout,
+  requests,
 };

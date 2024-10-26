@@ -7,6 +7,7 @@ const {
   login,
   logout,
   resetPassword,
+  requests,
 } = require("../controller/user.controller");
 const { tokenValidation } = require("../middleware/auth.middleware");
 
@@ -20,6 +21,8 @@ router.route("/signUp").post(signUp);
 router.route("/login").post(login);
 router.route("/logout").post(tokenValidation, logout);
 router.route("/resetPassword").patch(tokenValidation, resetPassword);
+
+router.route("/requests/received").get(tokenValidation, requests);
 
 module.exports = router;
 
