@@ -221,7 +221,7 @@ const requests = async (req, res) => {
   }
 };
 
-//Accept or Reject a Connection Requests
+//Accepted Connections
 const myConnections = async (req, res) => {
   try {
     const userId = req.body.userId;
