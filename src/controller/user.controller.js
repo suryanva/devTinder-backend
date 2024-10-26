@@ -194,8 +194,8 @@ const logout = async (req, res) => {
 const requests = async (req, res) => {
   try {
     const userId = req.body.userId;
-    const requests = await User.findById(userId);
-    if (!requests) {
+    const user = await User.findById(userId);
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
@@ -221,6 +221,55 @@ const requests = async (req, res) => {
   }
 };
 
+//Accept or Reject a Connection Requests
+const myConnections = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const myConnections = await Connection.find({
+      $or: [
+        { toUserId: userId, status: "accepted" },
+        { fromUserId: userId, status: "accepted" },
+      ],
+    })
+      .populate("fromUserId", [
+        "firstName",
+        "lastName",
+        "photoUrl",
+        "skills",
+        "age",
+        "about",
+      ])
+      .populate("toUserId", [
+        "firstName",
+        "lastName",
+        "photoUrl",
+        "skills",
+        "age",
+        "about",
+      ]);
+
+    if (myConnections.length === 0) {
+      return res.status(404).json({ error: "No connections found" });
+    }
+
+    const data = myConnections.map((connection) => {
+      if (connection.fromUserId._id.toString() === userId.toString()) {
+        return connection.toUserId;
+      }
+      return connection.fromUserId;
+    });
+    res.status(200).json({ data });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   signUp,
   getFeed,
@@ -231,4 +280,5 @@ module.exports = {
   resetPassword,
   logout,
   requests,
+  myConnections,
 };
