@@ -46,7 +46,7 @@ const swipe = async (req, res) => {
     const newConnection = await connectionInstance.save();
     res.status(201).json({
       message: `${user1.firstName} is ${status} in ${user2.firstName}`,
-      newConnection,
+      data: newConnection,
     });
   } catch (error) {
     console.error(error);
@@ -91,15 +91,12 @@ const review = async (req, res) => {
     const updatedConnection = await connection.save();
     res.status(200).json({
       message: `Connection ${status}`,
-      updatedConnection,
+      data: updatedConnection,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
-
-
-
 
 module.exports = { swipe, review };

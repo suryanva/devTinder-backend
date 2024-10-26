@@ -43,7 +43,9 @@ const signUp = async (req, res) => {
       age,
     }).select(USER_SAFE_DATA);
     const result = await user.save();
-    res.status(201).json({ message: "User created successfully", result });
+    res
+      .status(201)
+      .json({ message: "User created successfully", data: result });
   } catch (error) {
     // Log the error for debugging purposes
     console.error(error);
@@ -58,7 +60,7 @@ const getProfile = async (req, res) => {
     if (feed.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.status(200).json({ feed });
+    res.status(200).json({ data: feed });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -80,7 +82,6 @@ const getFeed = async (req, res) => {
     if (limit > 5) {
       limit = 5;
     }
-    
 
     const userId = req.body.userId;
     const user = await User.findById(userId);
@@ -109,7 +110,7 @@ const getFeed = async (req, res) => {
 
     usersFeed.filter((user) => user._id.toString() !== userId.toString());
 
-    res.status(200).json({ usersFeed });
+    res.status(200).json({ data: usersFeed });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -186,7 +187,7 @@ const login = async (req, res) => {
       httpOnly: true,
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
-    res.status(200).json({ user });
+    res.status(200).json({ data: user });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -258,7 +259,7 @@ const requests = async (req, res) => {
       return res.status(404).json({ error: "No pending requests found" });
     }
 
-    res.status(200).json({ pendingRequests });
+    res.status(200).json({ data: pendingRequests });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
