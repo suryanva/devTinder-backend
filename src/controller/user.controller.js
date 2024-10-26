@@ -1,10 +1,12 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const { tokenGeneration } = require("../utils/tokenGeneration");
+const { validateRequestBody } = require("../utils/profileUpdateValidation");
 
 const signUp = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, gender, skills } = req.body;
+    const { firstName, lastName, email, password, gender, skills, age } =
+      req.body;
 
     // Validate input data
     if (!firstName || !email || !password) {
@@ -28,6 +30,7 @@ const signUp = async (req, res) => {
       password: hashedPassword,
       gender,
       skills,
+      age,
     });
     const result = await user.save();
     res.status(201).json({ message: "User created successfully", result });
@@ -86,15 +89,39 @@ const deleteUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
+    const isEditAllowed = validateRequestBody(req);
+    if (!isEditAllowed) {
+      throw new Error("Invalid Edit Request");
+    }
     const userId = req.body.userId;
-    const user = await User.findByIdAndUpdate(userId, req.body, {
+    const allowedUpdates = [
+      "firstName",
+      "lastName",
+      "age",
+      "photoUrl",
+      "gender",
+      "skills",
+      "about",
+    ];
+    const updates = Object.keys(req.body).filter((key) =>
+      allowedUpdates.includes(key)
+    );
+    const updateData = {};
+    updates.forEach((key) => (updateData[key] = req.body[key]));
+
+    const user = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
       runValidators: true,
     });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.status(200).json({ message: "User updated successfully", user });
+    res
+      .status(200)
+      .json({
+        message: `${user.firstName} , your profile has been updated`,
+        data: user,
+      });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
