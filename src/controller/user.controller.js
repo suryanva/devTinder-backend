@@ -201,7 +201,14 @@ const requests = async (req, res) => {
 
     const pendingRequests = await Connection.find({
       $and: [{ toUserId: userId }, { status: "interested" }],
-    });
+    }).populate("fromUserId", [
+      "firstName",
+      "lastName",
+      "photoUrl",
+      "skills",
+      "age",
+      "about",
+    ]);
 
     if (pendingRequests.length === 0) {
       return res.status(404).json({ error: "No pending requests found" });
