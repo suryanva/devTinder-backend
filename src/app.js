@@ -3,6 +3,7 @@ const express = require("express");
 const { connectDB } = require("./config/database");
 //Importing Routers from router folder
 const userRouter = require("./router/user.router");
+const connectionRouter = require("./router/connection.router");
 
 dotenv.config();
 const app = express();
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Router Configuration
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/connections", connectionRouter);
 
 // Error Handling middleware
 app.use("/", (err, _req, res, _next) => {

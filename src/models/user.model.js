@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       validate: {
         validator: function (value) {
-          return ["M", "F"].includes(value);
+          return ["M", "F", "O"].includes(value);
         },
         message: (props) => `${props.value} is not a valid gender!`,
       },
