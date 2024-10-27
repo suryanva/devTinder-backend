@@ -173,7 +173,7 @@ const updateUser = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select(USER_SAFE_DATA);
+    const user = await User.findOne({ email });
     if (!user || !password) {
       return res.status(401).json({ error: "Invalid Login credentials" });
     }
@@ -187,7 +187,16 @@ const login = async (req, res) => {
       httpOnly: true,
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
-    res.status(200).json({ data: user });
+
+    // Filter user data to only include fields in USER_SAFE_DATA
+    const safeUserData = Object.keys(user._doc) // Accessing the raw user object
+      .filter((key) => USER_SAFE_DATA.includes(key)) // Keep only keys in USER_SAFE_DATA
+      .reduce((obj, key) => {
+        obj[key] = user[key]; // Assign the safe fields to the new object
+        return obj;
+      }, {});
+
+    res.status(200).json({ data: safeUserData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });

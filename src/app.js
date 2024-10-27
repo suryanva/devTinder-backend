@@ -1,5 +1,6 @@
 const dotenv = require("dotenv");
 const express = require("express");
+const cors = require("cors");
 const { connectDB } = require("./config/database");
 //Importing Routers from router folder
 const userRouter = require("./router/user.router");
@@ -7,6 +8,10 @@ const connectionRouter = require("./router/connection.router");
 
 dotenv.config();
 const app = express();
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true
+}));
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
