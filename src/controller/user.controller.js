@@ -237,7 +237,11 @@ const logout = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error(error);
