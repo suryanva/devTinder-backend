@@ -11,6 +11,8 @@ const USER_SAFE_DATA = [
   "skills",
   "age",
   "about",
+  "gender",
+  "email",
 ];
 
 const signUp = async (req, res) => {
@@ -41,7 +43,7 @@ const signUp = async (req, res) => {
       gender,
       skills,
       age,
-    }).select(USER_SAFE_DATA);
+    });
     const result = await user.save();
     res
       .status(201)
@@ -98,11 +100,9 @@ const getFeed = async (req, res) => {
       hideUsersFromFeed.add(connection.toUserId.toString());
     });
 
+    hideUsersFromFeed.add(userId.toString());
     const usersFeed = await User.find({
-      $and: [
-        { _id: { $nin: [...hideUsersFromFeed] } },
-        { _id: { $ne: userId } },
-      ],
+      _id: { $nin: [...hideUsersFromFeed] },
     })
       .select(USER_SAFE_DATA)
       .skip(skip)
@@ -253,19 +253,20 @@ const requests = async (req, res) => {
 
     const pendingRequests = await Connection.find({
       $and: [{ toUserId: userId }, { status: "interested" }],
-    })
-      .populate("fromUserId", [
-        "firstName",
-        "lastName",
-        "photoUrl",
-        "skills",
-        "age",
-        "about",
-      ])
-      .select(USER_SAFE_DATA);
+    }).populate("fromUserId", [
+      "firstName",
+      "lastName",
+      "photoUrl",
+      "skills",
+      "age",
+      "about",
+      "gender",
+    ]);
+
+    console.log(pendingRequests);
 
     if (pendingRequests.length === 0) {
-      return res.status(404).json({ error: "No pending requests found" });
+      return res.status(404).json({ error: "No pending requests" });
     }
 
     res.status(200).json({ data: pendingRequests });
@@ -297,6 +298,7 @@ const myConnections = async (req, res) => {
         "skills",
         "age",
         "about",
+        "gender",
       ])
       .populate("toUserId", [
         "firstName",
@@ -305,10 +307,11 @@ const myConnections = async (req, res) => {
         "skills",
         "age",
         "about",
+        "gender",
       ]);
 
     if (myConnections.length === 0) {
-      return res.status(404).json({ error: "No connections found" });
+      return res.status(200).json({ data: myConnections });
     }
 
     const data = myConnections.map((connection) => {
