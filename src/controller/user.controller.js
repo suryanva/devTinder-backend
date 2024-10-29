@@ -187,6 +187,8 @@ const login = async (req, res) => {
       httpOnly: true,
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       secure: true,
+      sameSite: "none",
+      
     });
 
     // Filter user data to only include fields in USER_SAFE_DATA
