@@ -263,8 +263,6 @@ const requests = async (req, res) => {
       "gender",
     ]);
 
-    console.log(pendingRequests);
-
     if (pendingRequests.length === 0) {
       return res.status(404).json({ error: "No pending requests" });
     }
